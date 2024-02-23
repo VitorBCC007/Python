@@ -1,0 +1,71 @@
+import tkinter as tk
+from tkinter import messagebox
+
+class TodoApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Lista de Tarefas")
+
+        self.tasks = []
+
+        # Interface
+        self.frame = tk.Frame(root, padx=20, pady=20)
+        self.frame.pack()
+
+        # Labels e Entradas
+        tk.Label(self.frame, text="Nova Tarefa:", font=("Arial", 12)).grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.task_entry = tk.Entry(self.frame, width=30, font=("Arial", 12))
+        self.task_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        # Botões
+        self.button_add = tk.Button(self.frame, text="Adicionar Tarefa", command=self.add_task, width=20, borderwidth=3, font=("Arial", 12))
+        self.button_add.grid(row=1, columnspan=2, pady=10)
+
+        self.button_complete = tk.Button(self.frame, text="Concluir Tarefa", command=self.complete_task, width=20, borderwidth=3, font=("Arial", 12))
+        self.button_complete.grid(row=2, columnspan=2, pady=5)
+
+        self.button_delete = tk.Button(self.frame, text="Excluir Tarefa", command=self.delete_task, width=20, borderwidth=3, font=("Arial", 12))
+        self.button_delete.grid(row=3, columnspan=2, pady=5)
+
+        # LISTA 
+        self.task_listbox = tk.Listbox(self.frame, height=10, width=50, font=("Arial", 12))
+        self.task_listbox.grid(row=4, columnspan=2, pady=10)
+
+    def add_task(self):
+        task = self.task_entry.get()
+        if task:
+            self.tasks.append(task)
+            self.update_task_listbox()
+            self.task_entry.delete(0, tk.END)
+        else:
+            messagebox.showwarning("Atenção", "Digite uma tarefa.")
+
+    def complete_task(self):
+        selected_task_index = self.task_listbox.curselection()
+        if selected_task_index:
+            task_index = selected_task_index[0]
+            if task_index < len(self.tasks):
+                del self.tasks[task_index]
+                self.update_task_listbox()
+        else:
+            messagebox.showwarning("Atenção", "Selecione uma tarefa para concluir.")
+
+    def delete_task(self):
+        selected_task_index = self.task_listbox.curselection()
+        if selected_task_index:
+            task_index = selected_task_index[0]
+            if task_index < len(self.tasks):
+                del self.tasks[task_index]
+                self.update_task_listbox()
+        else:
+            messagebox.showwarning("Atenção", "Selecione uma tarefa para excluir.")
+
+    def update_task_listbox(self):
+        self.task_listbox.delete(0, tk.END)
+        for task in self.tasks:
+            self.task_listbox.insert(tk.END, task)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TodoApp(root)
+    root.mainloop()
