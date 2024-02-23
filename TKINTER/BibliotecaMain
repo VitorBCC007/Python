@@ -1,0 +1,113 @@
+import tkinter as tk
+from AVLMerge import ArvoreAVL
+from Livro import Livro
+from tkinter import messagebox
+
+
+class Main:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Gerenciador de Biblioteca")
+
+        self.arvore = ArvoreAVL()
+        self.raiz = None
+
+        # Interface
+        self.frame = tk.Frame(root, padx=20, pady=20)
+        self.frame.pack()
+
+        # Labels e Entradas
+        tk.Label(self.frame, text="Título do Livro:", font=("Arial", 12)).grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.titulo_entry = tk.Entry(self.frame, width=30, font=("Arial", 12))
+        self.titulo_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        tk.Label(self.frame, text="Nome do Autor:", font=("Arial", 12)).grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.autor_entry = tk.Entry(self.frame, width=30, font=("Arial", 12))
+        self.autor_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        # Botões
+        self.botao_inserir = tk.Button(self.frame, text="Inserir Livro", command=self.inserir_livro, width=20, borderwidth=3, font=("Arial", 12))
+        self.botao_inserir.grid(row=2, columnspan=2, pady=10)
+
+        self.botao_buscar = tk.Button(self.frame, text="Buscar por Autor", command=self.buscar_por_autor, width=20, borderwidth=3, font=("Arial", 12))
+        self.botao_buscar.grid(row=3, columnspan=2, pady=5)
+
+        self.botao_exibir = tk.Button(self.frame, text="Exibir Livros", command=self.exibir_livros, width=20, borderwidth=3, font=("Arial", 12))
+        self.botao_exibir.grid(row=4, columnspan=2, pady=5)
+
+        self.botao_salvar = tk.Button(self.frame, text="Salvar em Arquivo", command=self.salvar_em_arquivo, width=20, borderwidth=3, font=("Arial", 12))  # Aumentando o tamanho do botão, adicionando borda e o tamanho da fonte
+        self.botao_salvar.grid(row=5, columnspan=2, pady=5)
+
+        self.botao_carregar = tk.Button(self.frame, text="Carregar de Arquivo", command=self.carregar_de_arquivo, width=20, borderwidth=3, font=("Arial", 12))  # Aumentando o tamanho do botão, adicionando borda e o tamanho da fonte
+        self.botao_carregar.grid(row=6, columnspan=2, pady=5)
+
+    # Label e Entrada para Exclusão de Livro
+        tk.Label(self.frame, text="Livro (linha) a Excluir:", font=("Arial", 12)).grid(row=7, column=0, padx=5, pady=5, sticky="w")
+        self.titulo_exclusao_entry = tk.Entry(self.frame, width=30, font=("Arial", 12))
+        self.titulo_exclusao_entry.grid(row=7, column=1, padx=5, pady=5)
+
+        # Botão para Excluir Livro
+        self.botao_excluir = tk.Button(self.frame, text="Excluir Livro", command=self.excluir_livro, width=20, borderwidth=3, font=("Arial", 12))
+        self.botao_excluir.grid(row=8, columnspan=2, pady=5)
+
+
+    def inserir_livro(self):
+        titulo = self.titulo_entry.get()
+        autor = self.autor_entry.get()
+
+        if titulo and autor:
+            livro = Livro(titulo, autor)
+            self.raiz = self.arvore.inserir(self.raiz, livro)
+            messagebox.showinfo("Sucesso", "Livro inserido com sucesso!")
+        else:
+            messagebox.showwarning("Atenção", "Preencha título e autor.")
+
+    def exibir_livros_ordenados(self):
+        livros_desordenados = self.arvore.obter_lista_livros(self.raiz)
+        livros_ordenados = self.arvore.merge_sort(livros_desordenados)
+
+        if livros_ordenados:
+            livros_str = "\n".join(str(livro) for livro in livros_ordenados)
+            messagebox.showinfo("Livros em Ordem Crescente", livros_str)
+        else:
+            messagebox.showinfo("Livros em Ordem Crescente", "Biblioteca vazia.")
+
+    def buscar_por_autor(self):
+        autor = self.autor_entry.get()
+
+        if autor:
+            contagem = self.arvore.contagem_por_autor(self.raiz, autor)
+            messagebox.showinfo("Busca por Autor", f"Quantidade de livros de {autor}: {contagem}")
+        else:
+            messagebox.showwarning("Atenção", "Digite o nome do autor.")
+
+    def excluir_livro(self):
+        identificador = int(self.titulo_exclusao_entry.get())
+
+        if identificador:
+            self.raiz = self.arvore.remover_por_identificador(self.raiz, identificador)
+            messagebox.showinfo("Sucesso", "Livro excluído com sucesso!")
+        else:
+            messagebox.showwarning("Atenção", "Digite o identificador do livro a excluir.")
+
+    def exibir_livros(self):
+        livros_ordem_crescente = self.arvore.exibir_em_ordem_crescente(self.raiz)
+        if livros_ordem_crescente:
+            livros_str = "\n".join(str(livro) for livro in livros_ordem_crescente)
+            messagebox.showinfo("Livros em Ordem Crescente", livros_str)
+        else:
+            messagebox.showinfo("Livros em Ordem Crescente", "Biblioteca vazia.")
+
+    def salvar_em_arquivo(self):
+        self.arvore.salvar_arvore_em_arquivo(self.raiz, "biblioteca.txt")
+        messagebox.showinfo("Salvo", "Biblioteca salva em arquivo 'biblioteca.txt'.")
+
+    def carregar_de_arquivo(self):
+        self.raiz = self.arvore.carregar_arvore_de_arquivo("biblioteca.txt")
+        messagebox.showinfo("Carregado", "Biblioteca carregada do arquivo 'biblioteca.txt'.")
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = Main(root)
+    root.mainloop()
