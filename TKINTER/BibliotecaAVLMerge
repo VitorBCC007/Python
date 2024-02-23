@@ -1,1 +1,235 @@
+from tkinter import messagebox
+from Livro import Livro
+from No import No
 
+
+class ArvoreAVL:
+
+    def __init__(self):
+        self.contador = 1  # Contador para os identificadores
+
+    def altura(self, no):
+        if not no:
+            return 0
+        return no.altura
+
+    def rotacao_direita(self, z):
+        y = z.esquerda
+        T3 = y.direita
+
+        y.direita = z
+        z.esquerda = T3
+
+        z.altura = 1 + max(self.altura(z.esquerda), self.altura(z.direita))
+        y.altura = 1 + max(self.altura(y.esquerda), self.altura(y.direita))
+
+        return y
+
+    def rotacao_esquerda(self, z):
+        y = z.direita
+        T2 = y.esquerda
+
+        y.esquerda = z
+        z.direita = T2
+
+        z.altura = 1 + max(self.altura(z.esquerda), self.altura(z.direita))
+        y.altura = 1 + max(self.altura(y.esquerda), self.altura(y.direita))
+
+        return y
+
+    def fator_balanceamento(self, no):
+        if not no:
+            return 0
+        return self.altura(no.esquerda) - self.altura(no.direita)
+
+    def inserir(self, raiz, novo_livro):
+        if not raiz:
+            novo_livro.identificador = self.contador
+            self.contador += 1
+            return No(novo_livro)
+
+        if novo_livro.titulo < raiz.livro.titulo:
+            raiz.esquerda = self.inserir(raiz.esquerda, novo_livro)
+        else:
+            raiz.direita = self.inserir(raiz.direita, novo_livro)
+
+        raiz.altura = 1 + max(self.altura(raiz.esquerda), self.altura(raiz.direita))
+
+        balanceamento = self.fator_balanceamento(raiz)
+
+        if balanceamento > 1:
+            if novo_livro.titulo < raiz.esquerda.livro.titulo:
+                return self.rotacao_direita(raiz)
+            else:
+                raiz.esquerda = self.rotacao_esquerda(raiz.esquerda)
+                return self.rotacao_direita(raiz)
+
+        if balanceamento < -1:
+            if novo_livro.titulo > raiz.direita.livro.titulo:
+                return self.rotacao_esquerda(raiz)
+            else:
+                raiz.direita = self.rotacao_direita(raiz.direita)
+                return self.rotacao_esquerda(raiz)
+
+        return raiz
+
+    def busca(self, raiz, titulo):
+        if not raiz or raiz.livro.titulo == titulo:
+            return raiz
+
+        if titulo < raiz.livro.titulo:
+            return self.busca(raiz.esquerda, titulo)
+        else:
+            return self.busca(raiz.direita, titulo)
+
+    def menor_valor_no(self, no):
+        atual = no
+        while atual.esquerda:
+            atual = atual.esquerda
+        return atual
+
+    def remover(self, raiz, titulo):
+        if not raiz:
+            return raiz
+
+        if titulo < raiz.livro.titulo:
+            raiz.esquerda = self.remover(raiz.esquerda, titulo)
+        elif titulo > raiz.livro.titulo:
+            raiz.direita = self.remover(raiz.direita, titulo)
+        else:
+            if raiz.esquerda is None:
+                temp = raiz.direita
+                raiz = None
+                return temp
+            elif raiz.direita is None:
+                temp = raiz.esquerda
+                raiz = None
+                return temp
+
+            temp = self.menor_valor_no(raiz.direita)
+            raiz.livro = temp.livro
+            raiz.direita = self.remover(raiz.direita, temp.livro.titulo)
+
+        if raiz is None:
+            return raiz
+
+        raiz.altura = 1 + max(self.altura(raiz.esquerda), self.altura(raiz.direita))
+
+        balanceamento = self.fator_balanceamento(raiz)
+
+        if balanceamento > 1:
+            if self.fator_balanceamento(raiz.esquerda) >= 0:
+                return self.rotacao_direita(raiz)
+            else:
+                raiz.esquerda = self.rotacao_esquerda(raiz.esquerda)
+                return self.rotacao_direita(raiz)
+
+        if balanceamento < -1:
+            if self.fator_balanceamento(raiz.direita) <= 0:
+                return self.rotacao_esquerda(raiz)
+            else:
+                raiz.direita = self.rotacao_direita(raiz.direita)
+                return self.rotacao_esquerda(raiz)
+
+        return raiz
+
+    def contagem_por_autor(self, raiz, autor):
+        if not raiz:
+            return 0
+
+        contagem = 0
+        if raiz.livro.autor == autor:
+            contagem += 1
+
+        contagem += self.contagem_por_autor(raiz.esquerda, autor)
+        contagem += self.contagem_por_autor(raiz.direita, autor)
+
+        return contagem
+
+    def exibir_em_ordem_crescente(self, raiz):
+        if not raiz:
+            return []
+
+        livros = []
+        livros += self.exibir_em_ordem_crescente(raiz.esquerda)
+        livros.append(raiz.livro)
+        livros += self.exibir_em_ordem_crescente(raiz.direita)
+
+        return livros
+
+    def salvar_arvore_em_arquivo(self, raiz, nome_arquivo):
+        with open(nome_arquivo, 'w') as arquivo:
+            livros = self.exibir_em_ordem_crescente(raiz)
+            for livro in livros:
+                arquivo.write(f"{livro.titulo},{livro.autor}\n")
+
+    def carregar_arvore_de_arquivo(self, nome_arquivo):
+        raiz = None
+        with open(nome_arquivo, 'r') as arquivo:
+            linhas = arquivo.readlines()
+            for linha in linhas:
+                dados = linha.strip().split(',')
+                livro = Livro(dados[0], dados[1])
+                raiz = self.inserir(raiz, livro)
+        return raiz
+
+    def obter_lista_livros(self, raiz):
+        if not raiz:
+            return []
+
+        livros = []
+        livros += self.obter_lista_livros(raiz.esquerda)
+        livros.append(raiz.livro)
+        livros += self.obter_lista_livros(raiz.direita)
+
+        return livros
+    
+    def buscar_por_identificador(self, raiz, identificador):
+        if not raiz:
+            return None
+
+        if raiz.livro.identificador == identificador:
+            return raiz
+
+        if identificador < raiz.livro.identificador:
+            return self.buscar_por_identificador(raiz.esquerda, identificador)
+        else:
+            return self.buscar_por_identificador(raiz.direita, identificador)
+
+    def remover_por_identificador(self, raiz, identificador):
+        no = self.buscar_por_identificador(raiz, identificador)
+        if not no:
+            messagebox.showwarning("Atenção", "Livro não encontrado.")
+            return raiz
+
+        raiz = self.remover(raiz, no.livro.titulo)
+        return raiz
+
+    def merge_sort(self, lista):
+        if len(lista) <= 1:
+            return lista
+
+        meio = len(lista) // 2
+        esquerda = lista[:meio]
+        direita = lista[meio:]
+
+        esquerda = self.merge_sort(esquerda)
+        direita = self.merge_sort(direita)
+
+        return self.merge(esquerda, direita)
+
+    def merge(self, esquerda, direita):
+        resultado = []
+        i = j = 0
+
+        while i < len(esquerda) and j < len(direita):
+            if esquerda[i].titulo < direita[j].titulo:
+                resultado.append(esquerda[i])
+                i += 1
+            else:
+                resultado.append(direita[j])
+                j += 1
+
+        resultado.extend(esquerda[i:])
+        resultado.extend(direita[j:])
+        return resultado
